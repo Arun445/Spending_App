@@ -1,7 +1,12 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
-
+from api import models
 User = get_user_model()
+
+
+def sample_user(email='test@email.com', password='password123'):
+    # Create a sample user
+    return User.objects.create_user(email, password)
 
 
 class ModelTests(TestCase):
@@ -36,3 +41,14 @@ class ModelTests(TestCase):
         )
         self.assertTrue(user.is_superuser)
         self.assertTrue(user.is_staff)
+
+    def test_transaction_str(self):
+        # Test the tag string representation
+        transaction = models.Transaction.objects.create(
+            user=sample_user(),
+            flow='expenses',
+            category='car',
+            note='gas',
+            ammount=5,
+        )
+        self.assertEqual(str(transaction), transaction.category)

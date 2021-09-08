@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, \
     PermissionsMixin
+from django.conf import settings
 
 
 class UserManager(BaseUserManager):
@@ -35,3 +36,24 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     USERNAME_FIELD = 'email'
+
+
+class Wallet(models.Model):
+    name = models.CharField(max_length=200)
+
+
+class Transaction(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE
+    )
+    flow = models.CharField(max_length=20)
+    category = models.CharField(max_length=20)
+    wallet = models.ForeignKey(
+        Wallet, on_delete=models.CASCADE)
+    date = models.DateTimeField(blank=True, null=True)
+    note = models.TextField(max_length=500, blank=True, null=True)
+    ammount = models.IntegerField()
+
+    def __str__(self):
+        return str(self.category)
