@@ -41,6 +41,9 @@ class User(AbstractBaseUser, PermissionsMixin):
 class Wallet(models.Model):
     name = models.CharField(max_length=200)
 
+    def __str__(self):
+        return str(self.name)
+
 
 class Transaction(models.Model):
     user = models.ForeignKey(
@@ -50,7 +53,7 @@ class Transaction(models.Model):
     flow = models.CharField(max_length=20)
     category = models.CharField(max_length=20)
     wallet = models.ForeignKey(
-        Wallet, on_delete=models.CASCADE)
+        Wallet, on_delete=models.CASCADE, null=True)
     date = models.DateTimeField(blank=True, null=True)
     note = models.TextField(max_length=500, blank=True, null=True)
     ammount = models.IntegerField()
