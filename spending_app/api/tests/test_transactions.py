@@ -92,7 +92,6 @@ class PrivateTransactionsApiTests(TestCase):
     def test_create_transaction_successful(self):
         # Test create transaction successful
         payload = {
-            'user': self.user.id,
             "flow": "expenses",
             "date": "2021-09-02T14:07:09",
             "wallet": self.wallet.id,
@@ -112,7 +111,6 @@ class PrivateTransactionsApiTests(TestCase):
     def test_create_transaction_invalid(self):
         # Creating a new tag with invalid payload
         payload = {
-            'user': self.user.id,
             'flow': 'expenses',
             'date': '2021-09-02T14:07:09',
             'wallet': self.wallet.id,

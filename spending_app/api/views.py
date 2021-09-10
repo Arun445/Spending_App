@@ -6,12 +6,20 @@ from .models import Transaction, Wallet
 from .serializers import TransactionSerializer, WalletSerializer
 
 
-class TransactionViewSet(viewsets.GenericViewSet,
-                         mixins.ListModelMixin,
-                         mixins.CreateModelMixin):
-    # Manage transactions in the database
+class BaseSpendingProfileAttrViewSet(viewsets.GenericViewSet,
+                                     mixins.ListModelMixin,
+                                     mixins.CreateModelMixin):
+    # Base viewset for spending app user profile attributes
     authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
+
+    def perform_create(self, serializer):
+        # Create a new object
+        serializer.save(user=self.request.user)
+
+
+class TransactionViewSet(BaseSpendingProfileAttrViewSet):
+    # Manage transactions in the database
     queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
 
@@ -19,24 +27,13 @@ class TransactionViewSet(viewsets.GenericViewSet,
         # return objects, for the current authenticated user only
         return self.queryset.filter(user=self.request.user).order_by('-date')
 
-    def perform_create(self, serializer):
-        # Create a new transaction
-        serializer.save(user=self.request.user)
 
-
-class WalletViewSet(viewsets.GenericViewSet,
-                    mixins.ListModelMixin,
-                    mixins.CreateModelMixin):
+class WalletViewSet(BaseSpendingProfileAttrViewSet):
+    # Manage wallets in the database
     serializer_class = WalletSerializer
     queryset = Wallet.objects.all()
-    permission_classes = (IsAuthenticated,)
-    authentication_classes = (TokenAuthentication,)
 
     def get_queryset(self):
         # return all the wallets for the current authenticated user
         return self.queryset.filter(user=self.request.user)\
             .order_by('-balance')
-
-    def perform_create(self, serializer):
-        # Create a new wallet
-        serializer.save(user=self.request.user)
