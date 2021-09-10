@@ -29,7 +29,8 @@ class PrivateTransactionsApiTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             email='test@email.com', password='password123')
-        self.wallet = Wallet.objects.create(name='testwallet')
+        self.wallet = Wallet.objects.create(
+            user=self.user, name='testwallet', currency='EUR', balance=100)
         self.client = APIClient()
         self.client.force_authenticate(self.user)
 
@@ -91,7 +92,7 @@ class PrivateTransactionsApiTests(TestCase):
     def test_create_transaction_successful(self):
         # Test create transaction successful
         payload = {
-            "user": self.user.id,
+            'user': self.user.id,
             "flow": "expenses",
             "date": "2021-09-02T14:07:09",
             "wallet": self.wallet.id,

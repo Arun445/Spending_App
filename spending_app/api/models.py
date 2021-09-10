@@ -39,7 +39,14 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 
 class Wallet(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        null=True
+    )
     name = models.CharField(max_length=200)
+    balance = models.IntegerField(default=0)
+    currency = models.CharField(max_length=200)
 
     def __str__(self):
         return str(self.name)
@@ -48,13 +55,14 @@ class Wallet(models.Model):
 class Transaction(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        null=True
     )
     flow = models.CharField(max_length=20)
     category = models.CharField(max_length=20)
     wallet = models.ForeignKey(
-        Wallet, on_delete=models.CASCADE, null=True)
-    date = models.DateTimeField(blank=True, null=True)
+        Wallet, on_delete=models.CASCADE)
+    date = models.DateTimeField()
     note = models.TextField(max_length=500, blank=True, null=True)
     ammount = models.IntegerField()
 
