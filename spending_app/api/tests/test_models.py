@@ -44,7 +44,7 @@ class ModelTests(TestCase):
         self.assertTrue(user.is_staff)
 
     def test_transaction_str(self):
-        # Test the tag string representation
+        # Test the transaction string representation
         user = sample_user()
         wallet = models.Wallet.objects.create(
             user=user,
@@ -64,7 +64,7 @@ class ModelTests(TestCase):
         self.assertEqual(str(transaction), transaction.category)
 
     def test_wallet_str(self):
-        # Test the ingriedient string representation
+        # Test the wallet string representation
         wallet = models.Wallet.objects.create(
             user=sample_user(),
             name='testwallet',
@@ -72,3 +72,8 @@ class ModelTests(TestCase):
             currency='EUR'
         )
         self.assertEqual(str(wallet), wallet.name)
+
+    def test_tag_str(self):
+        # Test the ingriedient string representation
+        tag = models.Tag.objects.create(name='Card')
+        self.assertEqual(str(tag), tag.name)

@@ -2,8 +2,8 @@ from rest_framework import viewsets, mixins
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 
-from .models import Transaction, Wallet
-from .serializers import TransactionSerializer, WalletSerializer
+from .models import Tag, Transaction, Wallet
+from .serializers import TransactionSerializer, WalletSerializer, TagSerializer
 
 
 class BaseSpendingProfileAttrViewSet(viewsets.GenericViewSet,
@@ -37,3 +37,12 @@ class WalletViewSet(BaseSpendingProfileAttrViewSet):
         # return all the wallets for the current authenticated user
         return self.queryset.filter(user=self.request.user)\
             .order_by('-balance')
+
+
+class TagViewSet(BaseSpendingProfileAttrViewSet):
+    # Manage tags in the database
+    serializer_class = TagSerializer
+    queryset = Tag.objects.all()
+
+    def get_queryset(self):
+        return self.queryset.filter(user=self.request.user)
