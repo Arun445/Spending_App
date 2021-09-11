@@ -3,7 +3,8 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 
 from .models import Tag, Transaction, Wallet
-from .serializers import TransactionSerializer, WalletSerializer, TagSerializer
+from .serializers import (TransactionSerializer, WalletSerializer,
+                          TagSerializer, TransactionDetailSerializer)
 
 
 class BaseSpendingProfileAttrViewSet(viewsets.GenericViewSet,
@@ -48,6 +49,12 @@ class TransactionViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         # return objects, for the current authenticated user only
         return self.queryset.filter(user=self.request.user).order_by('-date')
+
+    def get_serializer_class(self):
+        # return appropriate serializer class
+        if self.action == 'retrieve':
+            return TransactionDetailSerializer
+        return self.serializer_class
 
     def perform_create(self, serializer):
         return serializer.save(user=self.request.user)

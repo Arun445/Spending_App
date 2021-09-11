@@ -3,12 +3,22 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
-from api.models import Transaction, Wallet
-from api.serializers import TransactionSerializer
+from api.models import Transaction, Wallet, Tag
+from api.serializers import TransactionSerializer, TransactionDetailSerializer
 
 TRANSACTION_URL = reverse('api:transaction-list')
 
 User = get_user_model()
+
+
+def transaction_detail_url(recipe_id):
+    # Return transaction detail url
+    return reverse('api:transaction-detail', args=[recipe_id])
+
+
+def create_sample_tag(user, name):
+    # Creates and returns a sample tag
+    return Tag.objects.create(user=user, name=name)
 
 
 class PublicTransactionsApiTests(TestCase):
@@ -60,6 +70,22 @@ class PrivateTransactionsApiTests(TestCase):
         transactions = Transaction.objects.all().order_by('-date')
         serializer = TransactionSerializer(transactions, many=True)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, serializer.data)
+
+    def test_view_transaction_details(self):
+        # Test to view transaction details
+        transaction = Transaction.objects.create(
+            user=self.user,
+            flow='expenses',
+            date='2021-09-02T14:07:09',
+            wallet=self.wallet,
+            category='car',
+            ammount=5,
+        )
+        transaction.tags.add(create_sample_tag(self.user, 'baigna'))
+        url = transaction_detail_url(transaction.id)
+        response = self.client.get(url)
+        serializer = TransactionDetailSerializer(transaction, many=False)
         self.assertEqual(response.data, serializer.data)
 
     def test_transactions_limited_to_user(self):

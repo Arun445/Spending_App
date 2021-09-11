@@ -29,3 +29,8 @@ class TransactionSerializer(serializers.ModelSerializer):
         model = Transaction
         fields = '__all__'
         read_only_fields = ('id',)
+
+
+class TransactionDetailSerializer(TransactionSerializer):
+    # Serialize a transaction detail
+    tags = TagSerializer(many=True, read_only=True)
