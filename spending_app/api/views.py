@@ -18,16 +18,6 @@ class BaseSpendingProfileAttrViewSet(viewsets.GenericViewSet,
         serializer.save(user=self.request.user)
 
 
-class TransactionViewSet(BaseSpendingProfileAttrViewSet):
-    # Manage transactions in the database
-    queryset = Transaction.objects.all()
-    serializer_class = TransactionSerializer
-
-    def get_queryset(self):
-        # return objects, for the current authenticated user only
-        return self.queryset.filter(user=self.request.user).order_by('-date')
-
-
 class WalletViewSet(BaseSpendingProfileAttrViewSet):
     # Manage wallets in the database
     serializer_class = WalletSerializer
@@ -46,3 +36,18 @@ class TagViewSet(BaseSpendingProfileAttrViewSet):
 
     def get_queryset(self):
         return self.queryset.filter(user=self.request.user)
+
+
+class TransactionViewSet(viewsets.ModelViewSet):
+    # Manage transactions in the database
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (IsAuthenticated,)
+    queryset = Transaction.objects.all()
+    serializer_class = TransactionSerializer
+
+    def get_queryset(self):
+        # return objects, for the current authenticated user only
+        return self.queryset.filter(user=self.request.user).order_by('-date')
+
+    def perform_create(self, serializer):
+        return serializer.save(user=self.request.user)
