@@ -28,3 +28,4 @@ class UserAdmin(BaseUserAdmin):
 admin.site.register(models.User, UserAdmin)
 admin.site.register(models.Transaction)
 admin.site.register(models.Wallet)
+admin.site.register(models.Tag)

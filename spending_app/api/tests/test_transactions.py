@@ -126,13 +126,34 @@ class PrivateTransactionsApiTests(TestCase):
             "ammount": 5,
         }
 
-        self.client.post(TRANSACTION_URL, payload)
+        response = self.client.post(TRANSACTION_URL, payload)
 
         exist = Transaction.objects.filter(
             user=self.user,
             note=payload['note']
         ).exists()
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertTrue(exist)
+
+    def test_create_recipe_with_tags_successful(self):
+        # Test creating a recipe with tags
+        tag1 = create_sample_tag(self.user, 'testtag')
+        tag2 = create_sample_tag(self.user, 'testtag')
+        payload = {
+            "flow": "expenses",
+            "date": "2021-09-02T14:07:09",
+            "wallet": self.wallet.id,
+            'tags': [tag1.id, tag2.id],
+            "category": "food",
+            "ammount": 5,
+        }
+
+        response = self.client.post(TRANSACTION_URL, payload)
+        transaction = Transaction.objects.get(id=response.data['id'])
+        tags = transaction.tags.all()
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(len(tags), 2)
+        self.assertIn(tag1, tags)
 
     def test_create_transaction_invalid(self):
         # Creating a new tag with invalid payload
@@ -146,3 +167,51 @@ class PrivateTransactionsApiTests(TestCase):
         }
         response = self.client.post(TRANSACTION_URL, payload)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_partial_transaction_update_recipe(self):
+        # Test updating a transaction with patch
+        transaction = Transaction.objects.create(
+            user=self.user,
+            flow='expenses',
+            date='2021-09-02T14:07:09',
+            wallet=self.wallet,
+            category='car',
+            ammount=5,
+        )
+        transaction.tags.add(create_sample_tag(user=self.user, name='testtag'))
+        new_tag = create_sample_tag(user=self.user, name='testtag1')
+
+        payload = {'category': 'house', 'tags': new_tag.id}
+        url = transaction_detail_url(transaction.id)
+        self.client.patch(url, payload)
+
+        transaction.refresh_from_db()
+        self.assertEqual(transaction.category, payload['category'])
+        tags = transaction.tags.all()
+        self.assertEqual(len(tags), 1)
+        self.assertIn(new_tag, tags)
+
+    def test_full_transaction_update_recipe(self):
+        # Test updating a transaction with put
+        transaction = Transaction.objects.create(
+            user=self.user,
+            flow='expenses',
+            date='2021-09-02T14:07:09',
+            wallet=self.wallet,
+            category='car',
+            ammount=5,
+        )
+        transaction.tags.add(create_sample_tag(user=self.user, name='testtag'))
+
+        payload = {'category': 'salary',
+                   'flow': 'income',
+                   'date': '2021-09-12T14:07:09',
+                   'wallet': self.wallet.id,
+                   'ammount': 50, }
+        url = transaction_detail_url(transaction.id)
+        self.client.put(url, payload)
+        transaction.refresh_from_db()
+        self.assertEqual(transaction.ammount, payload['ammount'])
+        self.assertEqual(transaction.flow, payload['flow'])
+        tags = transaction.tags.all()
+        self.assertEqual(len(tags), 0)
