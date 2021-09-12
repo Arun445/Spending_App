@@ -1,3 +1,6 @@
+import tempfile
+import os
+from PIL import Image
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.urls import reverse
@@ -11,9 +14,14 @@ TRANSACTION_URL = reverse('api:transaction-list')
 User = get_user_model()
 
 
-def transaction_detail_url(recipe_id):
+def image_upload_url(transaction_id):
+    # Return URL for transaction image upload
+    return reverse('api:transaction-upload-image', args=[transaction_id])
+
+
+def transaction_detail_url(transaction_id):
     # Return transaction detail url
-    return reverse('api:transaction-detail', args=[recipe_id])
+    return reverse('api:transaction-detail', args=[transaction_id])
 
 
 def create_sample_tag(user, name):
@@ -215,3 +223,47 @@ class PrivateTransactionsApiTests(TestCase):
         self.assertEqual(transaction.flow, payload['flow'])
         tags = transaction.tags.all()
         self.assertEqual(len(tags), 0)
+
+
+class RecipeImageUploadTests(TestCase):
+
+    def setUp(self):
+        # test setup with an auth user, wallet and a transaction
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            'testmail@email.com', 'password123')
+        self.client.force_authenticate(self.user)
+        wallet = self.wallet = Wallet.objects.create(
+            user=self.user, name='testwallet', currency='EUR', balance=100)
+        self.transaction = Transaction.objects.create(
+            user=self.user,
+            flow='expenses',
+            date='2021-09-02T14:07:09',
+            wallet=wallet,
+            category='car',
+            ammount=5,
+        )
+
+    def tearDown(self):
+        self.transaction.image.delete()
+
+    def test_upload_image_to_transaction_successful(self):
+        # Test uploading an image to transaction successfuly
+        url = image_upload_url(self.transaction.id)
+        with tempfile.NamedTemporaryFile(suffix='.jpg') as ntf:
+            img = Image.new('RGB', (10, 10))
+            img.save(ntf, format='JPEG')
+            ntf.seek(0)
+            response = self.client.post(
+                url, {'image': ntf}, format='multipart')
+        self.transaction.refresh_from_db()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('image', response.data)
+        self.assertTrue(os.path.exists(self.transaction.image.path))
+
+    def test_upload_image_bad_request(self):
+        # Test upload an invalid image
+        url = image_upload_url(self.transaction.id)
+        response = self.client.post(
+            url, {'image': 'notimage'}, format='multipart')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

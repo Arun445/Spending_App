@@ -34,3 +34,12 @@ class TransactionSerializer(serializers.ModelSerializer):
 class TransactionDetailSerializer(TransactionSerializer):
     # Serialize a transaction detail
     tags = TagSerializer(many=True, read_only=True)
+
+
+class TransactionImageSerializer(serializers.ModelSerializer):
+    # Serializerfor uploading images to recipes
+
+    class Meta:
+        model = Transaction
+        fields = ('id', 'image')
+        read_only_fields = ('id',)
