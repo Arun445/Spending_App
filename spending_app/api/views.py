@@ -51,7 +51,17 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         # return objects, for the current authenticated user only
-        return self.queryset.filter(user=self.request.user).order_by('-date')
+        query = self.request.query_params.get('keyword')
+        queryset = self.queryset
+        if query:
+            if queryset.filter(tags__name__icontains=query):
+                queryset = queryset.filter(tags__name__icontains=query)
+            elif queryset.filter(category__icontains=query):
+                queryset = queryset.filter(category__icontains=query)
+            else:
+                queryset = queryset.filter(note__icontains=query)
+
+        return queryset.filter(user=self.request.user).order_by('-date')
 
     def get_serializer_class(self):
         # return appropriate serializer class

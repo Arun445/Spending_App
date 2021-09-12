@@ -215,14 +215,86 @@ class PrivateTransactionsApiTests(TestCase):
                    'flow': 'income',
                    'date': '2021-09-12T14:07:09',
                    'wallet': self.wallet.id,
-                   'ammount': 50, }
+                   'ammount': 50,
+                   }
         url = transaction_detail_url(transaction.id)
         self.client.put(url, payload)
         transaction.refresh_from_db()
         self.assertEqual(transaction.ammount, payload['ammount'])
         self.assertEqual(transaction.flow, payload['flow'])
         tags = transaction.tags.all()
+
         self.assertEqual(len(tags), 0)
+
+    def test_filter_transactions(self):
+        # Test returning transactions with filtered notes,categorys or tags
+        transaction1 = Transaction.objects.create(
+            user=self.user,
+            flow='expenses',
+            date='2021-09-02T14:07:09',
+            wallet=self.wallet,
+            category='food',
+            ammount=40,
+        )
+        transaction2 = Transaction.objects.create(
+            user=self.user,
+            flow='expenses',
+            date='2021-09-02T14:07:09',
+            wallet=self.wallet,
+            note='testnote1',
+            category='car',
+            ammount=50,
+        )
+
+        transaction1.tags.add(create_sample_tag(
+            user=self.user, name='testtag'))
+        transaction2.tags.add(create_sample_tag(
+            user=self.user, name='testtag1'))
+
+        response1 = self.client.get(TRANSACTION_URL, {'keyword': '1'})
+        # Test filter by tags
+        self.assertEqual(response1.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response1.data), 1)
+
+        response2 = self.client.get(TRANSACTION_URL, {'keyword': 'car'})
+        # Test filter by category
+        self.assertEqual(response2.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response2.data), 1)
+        self.assertEqual(response2.data[0]['category'], transaction2.category)
+
+        response3 = self.client.get(TRANSACTION_URL, {'keyword': 'testnote'})
+        # Test filter by notes
+        self.assertEqual(response3.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response3.data), 1)
+        self.assertEqual(response3.data[0]['note'], transaction2.note)
+
+    def test_filter_transactions_invalid(self):
+        # Test returning recipes with specific tags
+        transaction1 = Transaction.objects.create(
+            user=self.user,
+            flow='expenses',
+            date='2021-09-02T14:07:09',
+            wallet=self.wallet,
+            category='food',
+            ammount=40,
+        )
+        transaction2 = Transaction.objects.create(
+            user=self.user,
+            flow='expenses',
+            date='2021-09-02T14:07:09',
+            wallet=self.wallet,
+            category='car',
+            ammount=50,
+        )
+
+        transaction1.tags.add(create_sample_tag(
+            user=self.user, name='testtag'))
+        transaction2.tags.add(create_sample_tag(
+            user=self.user, name='testtag1'))
+
+        response = self.client.get(TRANSACTION_URL, {'keyword': '123'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 0)
 
 
 class RecipeImageUploadTests(TestCase):
