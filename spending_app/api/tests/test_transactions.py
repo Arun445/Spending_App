@@ -256,11 +256,11 @@ class PrivateTransactionsApiTests(TestCase):
         self.assertEqual(response1.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response1.data), 1)
 
-        response2 = self.client.get(TRANSACTION_URL, {'keyword': 'car'})
+        response2 = self.client.get(TRANSACTION_URL, {'keyword': 'foo'})
         # Test filter by category
         self.assertEqual(response2.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response2.data), 1)
-        self.assertEqual(response2.data[0]['category'], transaction2.category)
+        self.assertEqual(response2.data[0]['category'], transaction1.category)
 
         response3 = self.client.get(TRANSACTION_URL, {'keyword': 'testnote'})
         # Test filter by notes
