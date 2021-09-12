@@ -1,4 +1,5 @@
 
+from unittest.mock import patch
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from api import models
@@ -77,3 +78,12 @@ class ModelTests(TestCase):
         # Test the ingriedient string representation
         tag = models.Tag.objects.create(name='Card')
         self.assertEqual(str(tag), tag.name)
+
+    @patch('uuid.uuid4')
+    def test_transaction_file_name_uuid(self, mock_uuid):
+        # Test that image is saved in the correct location
+        uuid = 'test-uuid'
+        mock_uuid.return_value = uuid
+        file_path = models.transaction_image_file_path(None, 'myimage.jpg')
+        exp_path = f'uploads/transaction/{uuid}.jpg'
+        self.assertEqual(file_path, exp_path)

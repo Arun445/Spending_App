@@ -1,7 +1,16 @@
+import uuid
+import os
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, \
     PermissionsMixin
 from django.conf import settings
+
+
+def transaction_image_file_path(instance, filename):
+    # generate file path for new recipe image
+    extention = filename.split('.')[-1]
+    filename = f'{uuid.uuid4()}.{extention}'
+    return os.path.join('uploads/transaction/', filename)
 
 
 class UserManager(BaseUserManager):
@@ -66,6 +75,7 @@ class Transaction(models.Model):
     date = models.DateTimeField()
     note = models.TextField(max_length=500, blank=True, null=True)
     ammount = models.IntegerField()
+    image = models.ImageField(null=True, upload_to=transaction_image_file_path)
 
     def __str__(self):
         return str(self.category)
